@@ -1,3 +1,5 @@
+use crate::application::app::App;
+
 mod application;
 mod components;
 mod screens;
@@ -5,6 +7,5 @@ mod screens;
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     println!("Hello, world!");
-
-    Ok(())
+    ratatui::run(|terminal| App::default().run(terminal))
 }
