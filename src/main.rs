@@ -6,6 +6,5 @@ mod screens;
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
-    println!("Hello, world!");
     ratatui::run(|terminal| App::default().run(terminal))
 }
