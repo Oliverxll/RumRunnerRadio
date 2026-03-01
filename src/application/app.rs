@@ -18,8 +18,8 @@ impl App {
         while !self.exit {
             terminal.draw(|frame| self.draw(frame))?;
 
-            // Event reads block until an event is read. Event::poll is used to set aa timeout for these reading to not block the application.
-            // It would probably be better to listen for events in a separate thread to have a non-blocking main thread.
+            // Event reads block until an event is read. Event::poll is used to set a timeout for these reading to not block the application.
+            // It would probably be better to listen for events in a separate thread to have a non-blocking main thread. Problem for future home owner.
             if event::poll(TICK_RATE)? {
                 let event = event::read()?;
                 let actions = self.handle_events(&event);
