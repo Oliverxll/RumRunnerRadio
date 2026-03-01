@@ -1,8 +1,9 @@
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Spacing},
+    style::Stylize,
     symbols::border,
-    widgets::Block,
+    widgets::{Block, Padding},
 };
 
 use crate::screens::screen::Screen;
@@ -29,6 +30,18 @@ impl Default for Root {
 
 impl Root {
     pub fn draw(&self, frame: &mut Frame) {
+        if frame.area().height < 6 {
+            let too_small = Block::new()
+                .padding(Padding::vertical(frame.area().height / 2))
+                .title("Terminal too small".bold())
+                .title_alignment(ratatui::layout::Alignment::Center);
+
+            frame.render_widget(too_small, frame.area());
+
+            // We return early because the application panics when the height becomes 5 < from the defined layout.
+            return;
+        }
+
         let [top, bottom] = Layout::vertical([Constraint::Fill(1), Constraint::Length(5)])
             .spacing(Spacing::Overlap(1))
             .areas(frame.area());
