@@ -1,15 +1,27 @@
 use ratatui::{
     Frame,
-    layout::{Constraint, Layout, Spacing},
+    layout::{Constraint, Layout, Rect, Spacing},
     style::Stylize,
     symbols::border,
-    widgets::{Block, Padding},
+    widgets::{Block, Padding, Paragraph},
 };
 
 use crate::screens::screen::Screen;
 
 struct EmptyScreen;
-impl Screen for EmptyScreen {}
+impl Screen for EmptyScreen {
+    fn draw(&self, frame: &mut Frame, area: Rect) {
+        let [view] = Layout::vertical([Constraint::Fill(1)]).areas(area);
+
+        let block = Block::bordered();
+
+        let inner = block.inner(view);
+
+        frame.render_widget(block, view);
+
+        frame.render_widget(Paragraph::new("Empty.").centered(), inner);
+    }
+}
 impl Default for EmptyScreen {
     fn default() -> Self {
         EmptyScreen
@@ -49,19 +61,29 @@ impl Root {
         // The root of the viewtree.
         let top_block =
             Block::bordered().merge_borders(ratatui::symbols::merge::MergeStrategy::Exact);
+
+        let inner_top_block = top_block.inner(top);
+
         frame.render_widget(top_block, top);
 
         // Global media player.
         let bottom_block =
             Block::bordered().merge_borders(ratatui::symbols::merge::MergeStrategy::Exact);
+
+        let inner_bottom_block = bottom_block.inner(bottom);
+
         frame.render_widget(bottom_block, bottom);
 
         // Outer border styling.
         let [outer_border] = Layout::vertical([Constraint::Fill(1)]).areas(frame.area());
+
         let outer_border_block = Block::bordered()
             .title(" 🍾 Rum Runner Radio 📻 ")
             .border_set(border::THICK)
             .merge_borders(ratatui::symbols::merge::MergeStrategy::Replace);
         frame.render_widget(outer_border_block, outer_border);
+
+        // Pass the inner area for rendering to avoid overdrawing previous rendering.
+        self.screen.draw(frame, inner_top_block);
     }
 }
