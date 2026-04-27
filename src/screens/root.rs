@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
 };
 
-use crate::screens::screen::Screen;
+use crate::screens::{player_screen, screen::Screen};
 
 struct EmptyScreen;
 impl Screen for EmptyScreen {
@@ -30,12 +30,14 @@ impl Default for EmptyScreen {
 
 pub struct Root {
     screen: Box<dyn Screen>,
+    player_screen: player_screen::PlayerScreen,
 }
 
 impl Default for Root {
     fn default() -> Self {
         Self {
             screen: Box::new(EmptyScreen),
+            player_screen: player_screen::PlayerScreen {},
         }
     }
 }
@@ -85,5 +87,6 @@ impl Root {
 
         // Pass the inner area for rendering to avoid overdrawing previous rendering.
         self.screen.draw(frame, inner_top_block);
+        self.player_screen.draw(frame, inner_bottom_block);
     }
 }
