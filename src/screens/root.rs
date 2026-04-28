@@ -44,7 +44,7 @@ impl Default for Root {
 
 impl Root {
     pub fn draw(&self, frame: &mut Frame) {
-        if frame.area().height < 6 {
+        if frame.area().height < 9 {
             let too_small = Block::new()
                 .padding(Padding::vertical(frame.area().height / 2))
                 .title("Terminal too small".bold())
@@ -56,7 +56,7 @@ impl Root {
             return;
         }
 
-        let [top, bottom] = Layout::vertical([Constraint::Fill(1), Constraint::Length(5)])
+        let [top, bottom] = Layout::vertical([Constraint::Fill(1), Constraint::Length(8)])
             .spacing(Spacing::Overlap(1))
             .areas(frame.area());
 
