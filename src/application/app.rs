@@ -44,6 +44,8 @@ impl App {
     fn handle_key_event(&mut self, key_event: &KeyEvent) -> Vec<Action> {
         match key_event.code {
             KeyCode::Esc => vec![Action::Exit],
+            KeyCode::Tab => vec![Action::FocusNext],
+            KeyCode::BackTab => vec![Action::FocusPrev],
             _ => vec![],
         }
     }
@@ -52,13 +54,13 @@ impl App {
         let mut queue: VecDeque<Action> = actions.into();
 
         while let Some(action) = queue.pop_front() {
-            match action {
+            let mut new_actions = match action {
                 Action::Exit => {
                     self.exit = true;
+                    vec![]
                 }
-                Action::FocusNext | Action::FocusPrev => {}
-                _ => {}
-            }
+                _ => self.root.handle_action(action),
+            };
         }
     }
 
