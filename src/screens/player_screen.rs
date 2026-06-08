@@ -108,7 +108,7 @@ impl Screen for PlayerScreen {
                 print!("Navigating right in PlayerScreen");
                 vec![]
             }
-            _ => todo!(),
+            _ => vec![],
         }
     }
 }

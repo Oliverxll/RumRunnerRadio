@@ -1,3 +1,4 @@
+use crossterm::event::{KeyCode, KeyEvent, KeyboardEnhancementFlags};
 use ratatui::{
     Frame,
     layout::{Constraint, Layout, Rect, Spacing},
@@ -8,10 +9,38 @@ use ratatui::{
 
 use crate::{
     application::action::Action,
-    screens::{player_screen, screen::Screen},
+    screens::{navbar_screen, player_screen, screen::Screen},
 };
 
-struct EmptyScreen;
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum ViewId {
+    Navbar,
+    Player,
+    Main,
+}
+
+impl ViewId {
+    fn next(self) -> Self {
+        match self {
+            ViewId::Navbar => ViewId::Player,
+            ViewId::Player => ViewId::Main,
+            ViewId::Main => ViewId::Navbar,
+        }
+    }
+
+    fn prev(self) -> Self {
+        match self {
+            ViewId::Navbar => ViewId::Main,
+            ViewId::Player => ViewId::Navbar,
+            ViewId::Main => ViewId::Player,
+        }
+    }
+}
+
+struct EmptyScreen {
+    presses: u32,
+}
+
 impl Screen for EmptyScreen {
     fn draw(&self, frame: &mut Frame, area: Rect) {
         let [view] = Layout::vertical([Constraint::Fill(1)]).areas(area);
@@ -22,38 +51,58 @@ impl Screen for EmptyScreen {
 
         frame.render_widget(block, view);
 
-        frame.render_widget(Paragraph::new("Empty.").centered(), inner);
+        frame.render_widget(
+            Paragraph::new(format!("Empty.\nSpace pressed: {}", self.presses)).centered(),
+            inner,
+        );
     }
 
     fn handle_action(&mut self, action: Action) -> Vec<Action> {
         match action {
-            _ => {
-                vec![]
-            }
+            Action::Key(key_event) => match key_event.code {
+                KeyCode::Char(' ') => {
+                    self.presses = self.presses.saturating_add(1);
+                    vec![]
+                }
+                _ => vec![],
+            },
+            _ => vec![],
         }
     }
 }
 impl Default for EmptyScreen {
     fn default() -> Self {
-        EmptyScreen
+        EmptyScreen { presses: 0 }
     }
 }
 
 pub struct Root {
-    screen: Box<dyn Screen>,
-    player_screen: player_screen::PlayerScreen,
+    navbar: Box<dyn Screen>,
+    player: Box<dyn Screen>,
+    main: Box<dyn Screen>,
+    focus: ViewId,
 }
 
 impl Default for Root {
     fn default() -> Self {
         Self {
-            screen: Box::new(EmptyScreen),
-            player_screen: player_screen::PlayerScreen::default(),
+            navbar: Box::new(navbar_screen::Navbar::default()),
+            player: Box::new(player_screen::PlayerScreen::default()),
+            main: Box::new(EmptyScreen::default()), // Swap with main screen at some point.
+            focus: ViewId::Navbar,
         }
     }
 }
 
 impl Root {
+    fn focused_mut(&mut self) -> &mut dyn Screen {
+        match self.focus {
+            ViewId::Navbar => &mut *self.navbar,
+            ViewId::Player => &mut *self.player,
+            ViewId::Main => &mut *self.main,
+        }
+    }
+
     pub fn draw(&self, frame: &mut Frame) {
         // Panic prevention
         if frame.area().height <= 5 {
@@ -88,7 +137,7 @@ impl Root {
         frame.render_widget(&player_block, bottom);
 
         // Render the screen inside the block
-        self.player_screen.draw(frame, player_block.inner(bottom));
+        self.player.draw(frame, player_block.inner(bottom));
 
         // ┏━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
         // ┃  Nav  ┃        Main      ┃
@@ -109,7 +158,7 @@ impl Root {
         frame.render_widget(&view_port_block, view);
 
         // Render the screen inside the block
-        self.screen.draw(frame, view_port_block.inner(view));
+        self.main.draw(frame, view_port_block.inner(view));
 
         // Navbar block
         let nav_bar_block = Block::bordered()
@@ -120,7 +169,7 @@ impl Root {
         frame.render_widget(&nav_bar_block, navbar);
 
         // Render the screen inside the block
-        self.screen.draw(frame, nav_bar_block.inner(navbar));
+        self.navbar.draw(frame, nav_bar_block.inner(navbar));
 
         // Outer border styling
         let [outer_border] = Layout::vertical([Constraint::Fill(1)]).areas(frame.area());
@@ -136,9 +185,15 @@ impl Root {
 
     pub fn handle_action(&mut self, action: Action) -> Vec<Action> {
         match action {
-            Action::FocusNext => todo!(), // TODO: Next view in screens vec
-            Action::FocusPrev => todo!(), // TODO: Previous view in screens vec
-            _ => self.screen.handle_action(action),
+            Action::FocusNext => {
+                self.focus = self.focus.next();
+                vec![]
+            }
+            Action::FocusPrev => {
+                self.focus = self.focus.prev();
+                vec![]
+            }
+            _ => self.focused_mut().handle_action(action),
         }
     }
 }
