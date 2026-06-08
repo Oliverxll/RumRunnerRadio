@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies]
 color-eyre = "0.6.5"
 crossterm = "0.29.0"
-ratatui = "0.30.0"
-tokio = { version = "1.49.0", features = ["full"]}
+ratatui = "0.30.1"
+tokio = { version = "1.52.3", features = ["full"]}
 
 [profile.release]
 codegen-units = 1
